@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Tests (JUnit + H2)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Tests y build
+        run: mvn -B verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jar
+          path: target/carbonbox-java-1.0.0.jar
+
+  postgres:
+    name: Punta a punta con PostgreSQL
+    needs: test
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16
+        env:
+          POSTGRES_DB: carbonbox
+          POSTGRES_USER: carbonbox
+          POSTGRES_PASSWORD: carbonbox
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U carbonbox -d carbonbox"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/download-artifact@v4
+        with:
+          name: jar
+          path: target
+      - name: Levantar la app con PostgreSQL y subir el CSV de ejemplo
+        env:
+          SPRING_PROFILES_ACTIVE: postgres
+          DB_URL: jdbc:postgresql://localhost:5432/carbonbox
+        run: |
+          java -jar target/carbonbox-java-1.0.0.jar --carbonbox.storage.dir=/tmp/uploads > app.log 2>&1 &
+          bash scripts/smoke-test.sh http://localhost:8080 || (cat app.log; exit 1)
