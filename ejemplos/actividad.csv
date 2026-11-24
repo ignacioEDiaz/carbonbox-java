@@ -1,0 +1,10 @@
+category,amount,unit,date
+electricity,1250.5,kWh,2026-01-15
+natural_gas,320,m3,2026-01-20
+diesel,85.2,L,2026-02-03
+electricity,1180,kWh,2026-02-14
+"business_travel, flights",2400,km,2026-02-21
+electricity,-40,kWh,2026-03-01
+,15,kg,2026-03-05
+waste,15,kg,2026-02-30
+water,42,m3,2026-03-10

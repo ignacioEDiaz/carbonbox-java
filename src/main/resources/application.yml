@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: carbonbox-java
+  datasource:
+    # Por defecto: H2 en memoria con modo PostgreSQL, para correrlo sin instalar nada.
+    # Con docker compose se usa el perfil "postgres".
+    url: jdbc:h2:mem:carbonbox;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+  sql:
+    init:
+      mode: always
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none   # el esquema lo define schema.sql
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
+carbonbox:
+  storage:
+    dir: ./data/uploads
+  upload:
+    max-bytes: 5242880
+  queue:
+    batch-size: 5
+    visibility-timeout: PT30S
+    max-receive-count: 3
+    backoff-base: PT2S
+    backoff-max: PT1M
+  worker:
+    enabled: true
+    poll-interval: PT0.5S
+
+---
+spring:
+  config:
+    activate:
+      on-profile: postgres
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/carbonbox}
+    username: ${DB_USER:carbonbox}
+    password: ${DB_PASSWORD:carbonbox}
